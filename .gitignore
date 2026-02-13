@@ -1,0 +1,95 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# Next.js
+packages/frontend/.next/
+packages/frontend/out/
+packages/frontend/build/
+
+# Production
+dist/
+build/
+
+# Misc
+.DS_Store
+*.pem
+.vscode/
+.idea/
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Local env files
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Database
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+prisma/dev.db
+prisma/dev.db-journal
+
+# Logs
+logs/
+*.log
+combined.log
+error.log
+
+# Uploads (uncomment if you want to ignore upload files)
+packages/backend/uploads/
+!packages/backend/uploads/.gitkeep
+
+# Cache
+.cache/
+.parcel-cache/
+.eslintcache
+
+# Docker
+.dockerignore
+
+# OS
+Thumbs.db
+.Trash-*
+.nfs*
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Backup files
+*.bak
+*.backup

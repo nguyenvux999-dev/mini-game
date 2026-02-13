@@ -1,0 +1,204 @@
+// prisma/schema.prisma
+// Web MiniGame - Database Schema
+// Version: 1.0
+// Date: 05/02/2026
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  // provider = "postgresql"  // Dùng khi deploy lên Supabase
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// STORE CONFIGURATION
+// Cấu hình thương hiệu của quán - Chỉ có 1 record duy nhất
+// ============================================================================
+model StoreConfig {
+  id             Int      @id @default(autoincrement())
+  storeName      String   @map("store_name")
+  logoUrl        String?  @map("logo_url")
+  bannerUrl      String?  @map("banner_url")
+  primaryColor   String   @default("#FF6B35") @map("primary_color")
+  secondaryColor String   @default("#F7C59F") @map("secondary_color")
+  address        String?
+  hotline        String?
+  fanpageUrl     String?  @map("fanpage_url")
+  instagramUrl   String?  @map("instagram_url")
+  zaloUrl        String?  @map("zalo_url")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("store_config")
+}
+
+// ============================================================================
+// CAMPAIGNS
+// Chiến dịch khuyến mãi - Mỗi chiến dịch có thời gian bắt đầu/kết thúc
+// ============================================================================
+model Campaign {
+  id               Int      @id @default(autoincrement())
+  name             String
+  description      String?
+  startDate        DateTime @map("start_date")
+  endDate          DateTime @map("end_date")
+  activeGame       String   @map("active_game") // wheel | shake | memory | tap
+  gameConfig       String?  @map("game_config") // JSON config cho game
+  maxPlaysPerPhone Int      @default(1) @map("max_plays_per_phone")
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relations
+  rewards  Reward[]
+  vouchers Voucher[]
+  playLogs PlayLog[]
+
+  @@map("campaigns")
+}
+
+// ============================================================================
+// REWARDS
+// Phần thưởng trong mỗi chiến dịch
+// ============================================================================
+model Reward {
+  id            Int      @id @default(autoincrement())
+  campaignId    Int      @map("campaign_id")
+  name          String
+  description   String?
+  iconUrl       String?  @map("icon_url")
+  probability   Int // Tỉ lệ trúng 0-100
+  totalQuantity Int?     @map("total_quantity") // NULL = unlimited
+  remainingQty  Int?     @map("remaining_qty")
+  value         Int      @default(0) // Giá trị VND
+  isActive      Boolean  @default(true) @map("is_active")
+  displayOrder  Int      @default(0) @map("display_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  // Relations
+  campaign Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  vouchers Voucher[]
+  playLogs PlayLog[]
+
+  @@index([campaignId])
+  @@map("rewards")
+}
+
+// ============================================================================
+// PLAYERS
+// Người chơi - Đăng ký bằng số điện thoại
+// ============================================================================
+model Player {
+  id         Int       @id @default(autoincrement())
+  phone      String    @unique
+  name       String?
+  email      String?
+  playCount  Int       @default(0) @map("play_count")
+  totalWins  Int       @default(0) @map("total_wins")
+  lastPlayAt DateTime? @map("last_play_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  vouchers Voucher[]
+  playLogs PlayLog[]
+
+  @@index([phone])
+  @@map("players")
+}
+
+// ============================================================================
+// VOUCHERS
+// Voucher đã phát cho người chơi
+// ============================================================================
+model Voucher {
+  id         Int       @id @default(autoincrement())
+  playerId   Int       @map("player_id")
+  rewardId   Int       @map("reward_id")
+  campaignId Int       @map("campaign_id")
+  code       String    @unique
+  qrData     String?   @map("qr_data") // Base64 QR hoặc URL
+  status     String    @default("active") // active | used | expired | cancelled
+  expiresAt  DateTime? @map("expires_at")
+  usedAt     DateTime? @map("used_at")
+  usedBy     String?   @map("used_by") // Username nhân viên xác nhận
+  notes      String?
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  // Relations
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  reward   Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([playerId])
+  @@index([status])
+  @@index([campaignId])
+  @@map("vouchers")
+}
+
+// ============================================================================
+// PLAY LOGS
+// Lịch sử chơi game - Dùng cho thống kê và chống gian lận
+// ============================================================================
+model PlayLog {
+  id         Int      @id @default(autoincrement())
+  playerId   Int      @map("player_id")
+  campaignId Int      @map("campaign_id")
+  gameType   String   @map("game_type") // wheel | shake | memory | tap
+  rewardId   Int?     @map("reward_id") // NULL nếu không trúng
+  isWin      Boolean  @default(false) @map("is_win")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  deviceInfo String?  @map("device_info")
+  playedAt   DateTime @default(now()) @map("played_at")
+
+  // Relations
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  reward   Reward?  @relation(fields: [rewardId], references: [id], onDelete: SetNull)
+
+  @@index([playerId])
+  @@index([campaignId])
+  @@index([playedAt])
+  @@map("play_logs")
+}
+
+// ============================================================================
+// GAME ASSETS
+// Tài nguyên game (hình ảnh, âm thanh) - Có thể tùy chỉnh
+// ============================================================================
+model GameAsset {
+  id           Int      @id @default(autoincrement())
+  gameType     String   @map("game_type") // wheel | shake | memory | tap
+  assetType    String   @map("asset_type") // background | character | icon | card | falling_object | sound
+  assetName    String   @map("asset_name")
+  assetUrl     String   @map("asset_url")
+  description  String?
+  displayOrder Int      @default(0) @map("display_order")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([gameType])
+  @@index([assetType])
+  @@map("game_assets")
+}
+
+// ============================================================================
+// ADMIN USERS
+// Tài khoản quản trị
+// ============================================================================
+model AdminUser {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  passwordHash String    @map("password_hash")
+  role         String    @default("staff") // admin | staff
+  displayName  String?   @map("display_name")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLogin    DateTime? @map("last_login")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([username])
+  @@map("admin_users")
+}

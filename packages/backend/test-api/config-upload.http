@@ -1,0 +1,93 @@
+### Config Upload API Tests
+### Make sure the backend is running on http://localhost:4000
+
+@baseUrl = http://localhost:4000/api
+@contentType = multipart/form-data
+
+### 1. Upload Logo
+POST {{baseUrl}}/config/upload-logo HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="logo.png"
+Content-Type: image/png
+
+< ./test-images/logo.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Expected Response:
+# {
+#   "success": true,
+#   "data": {
+#     "url": "/uploads/logos/abc123_1707123456.png"
+#   },
+#   "message": "Upload logo thành công"
+# }
+
+###
+
+### 2. Upload Banner
+POST {{baseUrl}}/config/upload-banner HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="banner.jpg"
+Content-Type: image/jpeg
+
+< ./test-images/banner.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Expected Response:
+# {
+#   "success": true,
+#   "data": {
+#     "url": "/uploads/banners/xyz456_1707123456.jpg"
+#   },
+#   "message": "Upload banner thành công"
+# }
+
+###
+
+### 3. Get Public Config (verify updated URLs)
+GET {{baseUrl}}/config HTTP/1.1
+
+### Expected Response:
+# {
+#   "success": true,
+#   "data": {
+#     "store": {
+#       "name": "Quán Trà Sữa ABC",
+#       "logo": "/uploads/logos/abc123_1707123456.png",
+#       "banner": "/uploads/banners/xyz456_1707123456.jpg",
+#       ...
+#     },
+#     ...
+#   }
+# }
+
+###
+
+### 4. Get Admin Config
+GET {{baseUrl}}/config/admin HTTP/1.1
+
+### Expected Response:
+# {
+#   "success": true,
+#   "data": {
+#     "id": 1,
+#     "storeName": "Quán Trà Sữa ABC",
+#     "logoUrl": "/uploads/logos/abc123_1707123456.png",
+#     "bannerUrl": "/uploads/banners/xyz456_1707123456.jpg",
+#     ...
+#   }
+# }
+
+###
+
+### Notes:
+# 1. Files are uploaded to: packages/backend/uploads/logos/ or packages/backend/uploads/banners/
+# 2. File naming format: {nanoid(10)}_{timestamp}{extension}
+# 3. Allowed file types: image/jpeg, image/jpg, image/png, image/gif, image/webp
+# 4. Maximum file size: 5MB
+# 5. Rate limit: 20 uploads per 15 minutes per IP
+# 6. The store_config table is automatically updated with the new URL

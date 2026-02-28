@@ -54,6 +54,7 @@ export function createApp(): Express {
         config.cors.origin,
         'http://localhost:3000',
         'http://localhost:4000',
+        'https://minigame-26dm.vercel.app',
       ];
       
       // Also allow VS Code Dev Tunnels in any environment

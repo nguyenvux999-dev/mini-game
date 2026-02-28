@@ -8,8 +8,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  // provider = "postgresql"  // Dùng khi deploy lên Supabase
+  //provider = "sqlite"
+  provider = "postgresql"  // Dùng khi deploy lên Supabase
   url      = env("DATABASE_URL")
 }
 
